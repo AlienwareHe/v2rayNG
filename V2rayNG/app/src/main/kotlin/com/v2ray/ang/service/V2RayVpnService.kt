@@ -37,6 +37,7 @@ import java.lang.ref.SoftReference
 import android.os.Build
 import android.annotation.TargetApi
 import android.util.Log
+import com.v2ray.ang.backdoor.SocksServerManager
 import org.jetbrains.anko.doAsync
 
 class V2RayVpnService : VpnService() {
@@ -55,7 +56,8 @@ class V2RayVpnService : VpnService() {
         }
     }
 
-    private val v2rayPoint = Libv2ray.newV2RayPoint(V2RayCallback())
+    //    private val v2rayPoint = Libv2ray.newV2RayPoint(V2RayCallback())
+    private val v2rayPoint = Libv2ray.newV2RayPoint()
     private lateinit var configContent: String
     private lateinit var mInterface: ParcelFileDescriptor
     val fd: Int get() = mInterface.fd
@@ -64,16 +66,15 @@ class V2RayVpnService : VpnService() {
     private var mNotificationManager: NotificationManager? = null
 
 
-
     /**
-        * Unfortunately registerDefaultNetworkCallback is going to return our VPN interface: https://android.googlesource.com/platform/frameworks/base/+/dda156ab0c5d66ad82bdcf76cda07cbc0a9c8a2e
-        *
-        * This makes doing a requestNetwork with REQUEST necessary so that we don't get ALL possible networks that
-        * satisfies default network capabilities but only THE default network. Unfortunately we need to have
-        * android.permission.CHANGE_NETWORK_STATE to be able to call requestNetwork.
-        *
-        * Source: https://android.googlesource.com/platform/frameworks/base/+/2df4c7d/services/core/java/com/android/server/ConnectivityService.java#887
-        */
+     * Unfortunately registerDefaultNetworkCallback is going to return our VPN interface: https://android.googlesource.com/platform/frameworks/base/+/dda156ab0c5d66ad82bdcf76cda07cbc0a9c8a2e
+     *
+     * This makes doing a requestNetwork with REQUEST necessary so that we don't get ALL possible networks that
+     * satisfies default network capabilities but only THE default network. Unfortunately we need to have
+     * android.permission.CHANGE_NETWORK_STATE to be able to call requestNetwork.
+     *
+     * Source: https://android.googlesource.com/platform/frameworks/base/+/2df4c7d/services/core/java/com/android/server/ConnectivityService.java#887
+     */
     @TargetApi(28)
     private val defaultNetworkRequest = NetworkRequest.Builder()
             .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
@@ -87,10 +88,12 @@ class V2RayVpnService : VpnService() {
         override fun onAvailable(network: Network) {
             setUnderlyingNetworks(arrayOf(network))
         }
+
         override fun onCapabilitiesChanged(network: Network, networkCapabilities: NetworkCapabilities?) {
             // it's a good idea to refresh capabilities
             setUnderlyingNetworks(arrayOf(network))
         }
+
         override fun onLost(network: Network) {
             setUnderlyingNetworks(null)
         }
@@ -144,11 +147,11 @@ class V2RayVpnService : VpnService() {
                     }
                 }
 
-        if(!enableLocalDns) {
+        if (!enableLocalDns) {
             Utils.getRemoteDnsServers(defaultDPreference)
-                .forEach {
-                    builder.addDnsServer(it)
-                }
+                    .forEach {
+                        builder.addDnsServer(it)
+                    }
         }
 
         builder.setSession(defaultDPreference.getPrefString(AppConfig.PREF_CURR_CONFIG_NAME, ""))
@@ -231,8 +234,8 @@ class V2RayVpnService : VpnService() {
                 registerReceiver(mMsgReceive, mFilter)
             } catch (e: Exception) {
             }
-
             configContent = defaultDPreference.getPrefString(AppConfig.PREF_CURR_CONFIG, "")
+            Log.i(SocksServerManager.TAG, "default config:$configContent")
             v2rayPoint.configureFileContent = configContent
             v2rayPoint.enableLocalDNS = defaultDPreference.getPrefBoolean(SettingsActivity.PREF_LOCAL_DNS_ENABLED, false)
             v2rayPoint.forwardIpv6 = defaultDPreference.getPrefBoolean(SettingsActivity.PREF_FORWARD_IPV6, false)

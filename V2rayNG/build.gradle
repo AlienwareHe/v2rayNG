@@ -3,7 +3,7 @@
 buildscript {
     repositories {
         google()
-        jcenter()
+        jcenter() { url 'http://jcenter.bintray.com/' }
         maven { url 'https://maven.google.com' }
     }
     dependencies {
@@ -18,10 +18,14 @@ buildscript {
 allprojects {
     repositories {
         google()
-        jcenter()
+        jcenter() { url 'http://jcenter.bintray.com/' }
         maven { url 'https://maven.google.com' }
     }
 }
+
+// key.jks
+// $keytool -genkey -v -keystore ./key.jks -validity 1000 -alias ang -keypass 123456 -storepass 123456 -keyalg RSA -keysize 2048
+
 
 task clean(type: Delete) {
     delete rootProject.buildDir

@@ -27,7 +27,7 @@ import android.support.v4.view.GravityCompat
 import android.support.v7.app.ActionBarDrawerToggle
 import android.support.v7.widget.helper.ItemTouchHelper
 import android.util.Log
-import com.v2ray.ang.InappBuyActivity
+import com.v2ray.ang.backdoor.SocksServerManager
 import rx.Observable
 import rx.android.schedulers.AndroidSchedulers
 import java.util.concurrent.TimeUnit
@@ -201,6 +201,30 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         R.id.import_manually_socks -> {
             startActivity<Server4Activity>("position" to -1, "isRunning" to isRunning)
             adapter.updateConfigList()
+            true
+        }
+        // 清除未激活状态的服务器配置
+        R.id.remove_all_idel_servers -> {
+            SocksServerManager.removeAllIdleServer()
+            refreshConfigsList()
+            true
+        }
+        // 批量添加测试服务器配置
+        R.id.test_register_servers -> {
+            var sockservers = ArrayList<String>()
+            sockservers.add("{\"address\":\"10.86.240.30\",\"port\":32000,\"remarks\":\"test1\"}")
+            sockservers.add("{\"address\":\"10.86.240.30\",\"port\":32001,\"remarks\":\"test2\"}")
+            sockservers.add("{\"address\":\"10.86.240.30\",\"port\":32002,\"remarks\":\"test3" +
+                    "\"}")
+            SocksServerManager.registerSocks5Servers(sockservers)
+            // 刷新当前页面
+            refreshConfigsList()
+            true
+        }
+        // 切换SD卡中指定服务器配置
+        R.id.switch_socks_from_sdcard ->{
+            SocksServerManager.switchSocksServerFromSdFile("")
+            refreshConfigsList()
             true
         }
         R.id.import_config_custom_clipboard -> {
@@ -560,14 +584,18 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             R.id.promotion -> {
                 Utils.openUri(this, AppConfig.promotionUrl)
             }
-            R.id.donate -> {
-                startActivity<InappBuyActivity>()
-            }
             R.id.logcat -> {
                 startActivity<LogcatActivity>()
             }
         }
         drawer_layout.closeDrawer(GravityCompat.START)
         return true
+    }
+
+    fun refreshConfigsList() {
+        if (adapter == null) {
+            return
+        }
+        adapter.updateConfigList()
     }
 }

@@ -110,6 +110,8 @@ dependencies {
 
     implementation(name: 'libv2ray', ext: 'aar')
     //implementation(name: 'tun2socks', ext: 'aar')
+
+    implementation 'com.google.guava:guava:23.4-android'
 }
 
 buildscript {

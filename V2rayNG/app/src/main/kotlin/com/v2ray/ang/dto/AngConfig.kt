@@ -5,6 +5,9 @@ data class AngConfig(
         var vmess: ArrayList<VmessBean>,
         var subItem: ArrayList<SubItemBean>
 ) {
+    /**
+     * 全量server配置信息
+     */
     data class VmessBean(var guid: String = "123456",
                          var address: String = "v2ray.cool",
                          var port: Int = 10086,
@@ -22,6 +25,9 @@ data class AngConfig(
                          var testResult: String = "",
                          var subid: String = "")
 
+    /**
+     * 缩略图
+     */
     data class SubItemBean(var id: String = "",
                            var remarks: String = "",
                            var url: String = "")

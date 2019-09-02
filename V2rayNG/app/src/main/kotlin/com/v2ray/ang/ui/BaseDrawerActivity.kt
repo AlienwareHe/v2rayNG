@@ -13,7 +13,6 @@ import android.support.v7.widget.Toolbar
 import android.util.Log
 import android.view.MenuItem
 import android.view.View
-import com.v2ray.ang.InappBuyActivity
 
 import com.v2ray.ang.R
 import org.jetbrains.anko.startActivity
@@ -60,10 +59,6 @@ abstract class BaseDrawerActivity : BaseActivity() {
                     R.id.settings -> activityClass = SettingsActivity::class.java
                     R.id.logcat -> {
                         startActivity<LogcatActivity>()
-                        return
-                    }
-                    R.id.donate -> {
-                        startActivity<InappBuyActivity>()
                         return
                     }
                 }

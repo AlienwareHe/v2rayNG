@@ -26,6 +26,18 @@
                 android:id="@+id/import_manually_socks"
                 android:title="@string/menu_item_import_config_manually_socks"
                 app:showAsAction="never" />
+            <item
+                android:id="@+id/remove_all_idel_servers"
+                android:title="@string/menu_item_remove_all_idle_servers"
+                app:showAsAction="never" />
+            <item
+                android:id="@+id/test_register_servers"
+                android:title="@string/menu_item_test_register_servers"
+                app:showAsAction="never" />
+            <item
+                android:id="@+id/switch_socks_from_sdcard"
+                android:title="@string/menu_item_switch_socks_from_sdcard"
+                app:showAsAction="never" />
 
             <item
                 android:icon="@drawable/ic_add_white_24dp"

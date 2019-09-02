@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.text.TextUtils
 import android.util.Log
 import com.google.gson.Gson
+import com.google.gson.JsonObject
 import com.v2ray.ang.AngApplication
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.AppConfig.ANG_CONFIG
@@ -14,6 +15,7 @@ import com.v2ray.ang.AppConfig.SOCKS_PROTOCOL
 import com.v2ray.ang.AppConfig.SS_PROTOCOL
 import com.v2ray.ang.AppConfig.VMESS_PROTOCOL
 import com.v2ray.ang.R
+import com.v2ray.ang.backdoor.SocksServerManager.TAG
 import com.v2ray.ang.dto.AngConfig
 import com.v2ray.ang.dto.VmessQRCode
 import com.v2ray.ang.extension.defaultDPreference
@@ -24,11 +26,13 @@ import java.net.*
 import java.math.BigInteger
 
 object AngConfigManager {
+
     private lateinit var app: AngApplication
     private lateinit var angConfig: AngConfig
     val configs: AngConfig get() = angConfig
 
     fun inject(app: AngApplication) {
+        Log.i(TAG,"angConfigManager inject init!")
         this.app = app
         if (app.firstRun) {
         }
@@ -70,7 +74,7 @@ object AngConfigManager {
         try {
             vmess.configVersion = 2
             vmess.configType = AppConfig.EConfigType.Vmess
-
+            Log.i(TAG, "add or edit server,index:" + index + "vmess:" + Gson().toJson(vmess))
             if (index >= 0) {
                 //edit
                 angConfig.vmess[index] = vmess
@@ -697,6 +701,7 @@ object AngConfigManager {
     }
 
     fun addSocksServer(vmess: AngConfig.VmessBean, index: Int): Int {
+        Log.i(TAG, "add or edit socks server,index:" + index + "vmess:" + Gson().toJson(vmess))
         try {
             vmess.configVersion = 2
             vmess.configType = AppConfig.EConfigType.Socks

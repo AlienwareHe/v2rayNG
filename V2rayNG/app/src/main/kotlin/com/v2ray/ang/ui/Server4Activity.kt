@@ -11,7 +11,9 @@ import com.v2ray.ang.util.Utils
 import kotlinx.android.synthetic.main.activity_server4.*
 import org.jetbrains.anko.*
 
-
+/**
+ * Socks Activity
+ */
 class Server4Activity : BaseActivity() {
     companion object {
         private const val REQUEST_SCAN = 1

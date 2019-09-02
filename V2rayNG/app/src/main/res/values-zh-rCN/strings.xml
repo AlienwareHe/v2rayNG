@@ -26,6 +26,9 @@
     <string name="menu_item_import_config_manually_vmess">手动输入[Vmess]</string>
     <string name="menu_item_import_config_manually_ss">手动输入[Shadowsocks]</string>
     <string name="menu_item_import_config_manually_socks">手动输入[Socks]</string>
+    <string name="menu_item_remove_all_idle_servers">清除所有非激活配置</string>
+    <string name="menu_item_test_register_servers">测试添加配置选项</string>
+    <string name="menu_item_switch_socks_from_sdcard">根据SD卡切换socks配置</string>
     <string name="menu_item_import_config_custom">自定义配置</string>
     <string name="menu_item_import_config_custom_clipboard">从剪贴板导入自定义配置</string>
     <string name="menu_item_import_config_custom_local">从本地导入自定义配置</string>
