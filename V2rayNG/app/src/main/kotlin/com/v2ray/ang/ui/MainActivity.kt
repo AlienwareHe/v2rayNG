@@ -1,38 +1,41 @@
 package com.v2ray.ang.ui
 
 import android.Manifest
-import android.content.*
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.net.VpnService
-import android.support.v7.widget.LinearLayoutManager
-import android.view.Menu
-import android.view.MenuItem
-import com.tbruyelle.rxpermissions.RxPermissions
-import com.v2ray.ang.R
-import com.v2ray.ang.util.AngConfigManager
-import com.v2ray.ang.util.Utils
-import kotlinx.android.synthetic.main.activity_main.*
 import android.os.Bundle
-import android.text.TextUtils
-import android.view.KeyEvent
-import com.v2ray.ang.AppConfig
-import com.v2ray.ang.util.MessageUtil
-import com.v2ray.ang.util.V2rayConfigUtil
-import org.jetbrains.anko.*
-import java.lang.ref.SoftReference
-import java.net.URL
-import android.content.IntentFilter
 import android.support.design.widget.NavigationView
 import android.support.v4.view.GravityCompat
 import android.support.v7.app.ActionBarDrawerToggle
+import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.helper.ItemTouchHelper
+import android.text.TextUtils
 import android.util.Log
+import android.view.KeyEvent
+import android.view.Menu
+import android.view.MenuItem
+import com.tbruyelle.rxpermissions.RxPermissions
+import com.v2ray.ang.AppConfig
+import com.v2ray.ang.R
 import com.v2ray.ang.backdoor.SocksServerManager
+import com.v2ray.ang.helper.SimpleItemTouchHelperCallback
+import com.v2ray.ang.util.AngConfigManager
+import com.v2ray.ang.util.AngConfigManager.configs
+import com.v2ray.ang.util.MessageUtil
+import com.v2ray.ang.util.Utils
+import com.v2ray.ang.util.V2rayConfigUtil
+import kotlinx.android.synthetic.main.activity_main.*
+import org.jetbrains.anko.*
 import rx.Observable
 import rx.android.schedulers.AndroidSchedulers
+import java.lang.ref.SoftReference
+import java.net.URL
 import java.util.concurrent.TimeUnit
-import com.v2ray.ang.helper.SimpleItemTouchHelperCallback
-import com.v2ray.ang.util.AngConfigManager.configs
 
 class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedListener {
     companion object {
@@ -59,8 +62,27 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     private val adapter by lazy { MainRecyclerAdapter(this) }
     private var mItemTouchHelper: ItemTouchHelper? = null
 
+    // 权限回调
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            Log.i(SocksServerManager.TAG, "读写权限获取成功")
+        } else {
+            // 否则重试一次
+            SocksServerManager.verifyStoragePermissions(this)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // do some external thing
+        // 1.申请SD卡读写权限
+        SocksServerManager.verifyStoragePermissions(this)
+        // 2.启动AppManageService
+        var intent = Intent()
+        intent.setPackage("com.v2ray.ang.service")
+        intent.setAction("com.v2ray.action.appmanageservice")
+        startService(intent)
+        // end do some external thing
         setContentView(R.layout.activity_main)
         title = getString(R.string.title_server)
         setSupportActionBar(toolbar)
@@ -222,7 +244,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             true
         }
         // 切换SD卡中指定服务器配置
-        R.id.switch_socks_from_sdcard ->{
+        R.id.switch_socks_from_sdcard -> {
             SocksServerManager.switchSocksServerFromSdFile("")
             refreshConfigsList()
             true

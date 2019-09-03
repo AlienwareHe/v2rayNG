@@ -547,20 +547,20 @@ object V2rayConfigUtil {
                             mux = null))
             }
 
-            // DNS routing 
-            v2rayConfig.routing.rules.add(0, V2rayConfig.RoutingBean.RulesBean(
-                    type = "field",
-                    outboundTag = AppConfig.TAG_DIRECT,
-                    port = "53",
-                    ip = domesticDns,
-                    domain = null)
-            )
-
+            // DNS routing
             v2rayConfig.routing.rules.add(0, V2rayConfig.RoutingBean.RulesBean(
                     type = "field",
                     outboundTag = AppConfig.TAG_AGENT,
                     port = "53",
                     ip = remoteDns,
+                    domain = null)
+            )
+
+            v2rayConfig.routing.rules.add(0, V2rayConfig.RoutingBean.RulesBean(
+                    type = "field",
+                    outboundTag = AppConfig.TAG_DIRECT,
+                    port = "53",
+                    ip = domesticDns,
                     domain = null)
             )
 

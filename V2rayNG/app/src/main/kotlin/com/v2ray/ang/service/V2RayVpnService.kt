@@ -56,8 +56,8 @@ class V2RayVpnService : VpnService() {
         }
     }
 
-    //    private val v2rayPoint = Libv2ray.newV2RayPoint(V2RayCallback())
-    private val v2rayPoint = Libv2ray.newV2RayPoint()
+    private val v2rayPoint = Libv2ray.newV2RayPoint(V2RayCallback())
+    //    private val v2rayPoint = Libv2ray.newV2RayPoint()
     private lateinit var configContent: String
     private lateinit var mInterface: ParcelFileDescriptor
     val fd: Int get() = mInterface.fd

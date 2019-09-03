@@ -12,9 +12,6 @@ import com.google.gson.Gson;
 import com.v2ray.ang.IAppManageService;
 import com.v2ray.ang.backdoor.SocksServerManager;
 import com.v2ray.ang.dto.AngConfig;
-import com.v2ray.ang.util.AngConfigManager;
-
-import java.util.ArrayList;
 
 import static com.v2ray.ang.backdoor.SocksServerManager.TAG;
 
@@ -44,5 +41,15 @@ public class AppManageService extends Service {
     @Override
     public IBinder onBind(Intent intent) {
         return binder;
+    }
+
+    @Override
+    public void onCreate() {
+        Log.i(TAG,"V2Ray Manage Service启动成功");
+    }
+
+    @Override
+    public void onDestroy() {
+        Log.i(TAG,"V2Ray Manage Service销毁成功");
     }
 }

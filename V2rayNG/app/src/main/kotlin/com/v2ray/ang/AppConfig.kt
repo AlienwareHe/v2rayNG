@@ -37,7 +37,8 @@ object AppConfig {
     const val v2rayNGIssues = "https://github.com/2dust/v2rayNG/issues"
     const val promotionUrl = "https://1.2345345.xyz/ads.html"
 
-    const val DNS_AGENT = "1.1.1.1"
+    // 为空时的默认DNS配置
+    const val DNS_AGENT = "114.114.114.114"
     const val DNS_DIRECT = "223.5.5.5"
 
     const val MSG_REGISTER_CLIENT = 1
