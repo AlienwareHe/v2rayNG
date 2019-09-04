@@ -78,9 +78,8 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         // 1.申请SD卡读写权限
         SocksServerManager.verifyStoragePermissions(this)
         // 2.启动AppManageService
-        var intent = Intent()
-        intent.setPackage("com.v2ray.ang.service")
-        intent.setAction("com.v2ray.action.appmanageservice")
+        val intent = Intent()
+        intent.setClassName(this,"com.v2ray.ang.service.AppManageService")
         startService(intent)
         // end do some external thing
         setContentView(R.layout.activity_main)

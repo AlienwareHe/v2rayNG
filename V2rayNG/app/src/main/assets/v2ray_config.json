@@ -129,6 +129,22 @@
         "outboundTag": "direct",
         "port": "53",
         "type": "field"
+      },
+      {
+        "domain": [
+          "dpgrab.virjar.com"
+        ],
+        "outboundTag": "direct",
+        "port": "5597,20000",
+        "type": "field"
+      },
+      {
+        "domain": [
+          "controlips.corp.qunar.com"
+        ],
+        "outboundTag": "direct",
+        "port": "80",
+        "type": "field"
       }
     ]
   },

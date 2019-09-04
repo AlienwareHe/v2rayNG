@@ -17,25 +17,32 @@ import static com.v2ray.ang.backdoor.SocksServerManager.TAG;
 
 public class AppManageService extends Service {
 
+
+    /**
+     * 提供AIDL远程服务
+     */
     private IBinder binder = new IAppManageService.Stub() {
         @Override
-        public boolean switchSocksServer(String socksInfoJson) throws RemoteException {
-            if (Strings.isNullOrEmpty(socksInfoJson)) {
+        public boolean switchSocksServer(String serverInfoJson) throws RemoteException {
+            if (Strings.isNullOrEmpty(serverInfoJson)) {
                 return false;
             }
+            Log.i(TAG, "切换代理服务器:" + serverInfoJson);
             AngConfig.VmessBean vmessBean = null;
             try {
-                vmessBean = new Gson().fromJson(socksInfoJson, AngConfig.VmessBean.class);
+                vmessBean = new Gson().fromJson(serverInfoJson, AngConfig.VmessBean.class);
             } catch (Exception e) {
                 Log.e(TAG, "socksInfoJson不合法！", e);
                 return false;
             }
-            if(vmessBean == null){
+            if (vmessBean == null) {
                 return false;
             }
             return SocksServerManager.registerAndActiveServer(vmessBean);
         }
     };
+
+
 
     @Nullable
     @Override
@@ -45,11 +52,13 @@ public class AppManageService extends Service {
 
     @Override
     public void onCreate() {
-        Log.i(TAG,"V2Ray Manage Service启动成功");
+        Log.i(TAG, "V2Ray Manage Service启动成功");
+        // 启动定时切换代理
+        new AutoChangeServerThread().start();
     }
 
     @Override
     public void onDestroy() {
-        Log.i(TAG,"V2Ray Manage Service销毁成功");
+        Log.i(TAG, "V2Ray Manage Service销毁成功");
     }
 }

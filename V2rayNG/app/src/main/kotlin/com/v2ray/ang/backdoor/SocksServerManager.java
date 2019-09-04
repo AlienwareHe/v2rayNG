@@ -1,9 +1,13 @@
 package com.v2ray.ang.backdoor;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.v4.app.ActivityCompat;
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.google.common.base.Strings;
@@ -13,21 +17,28 @@ import com.v2ray.ang.AngApplication;
 import com.v2ray.ang.AppConfig;
 import com.v2ray.ang.dto.AngConfig;
 import com.v2ray.ang.extension._ExtKt;
+import com.v2ray.ang.model.OpsSocksInfo;
 import com.v2ray.ang.service.V2RayVpnService;
 import com.v2ray.ang.util.AngConfigManager;
+import com.v2ray.ang.util.DeviceInfoUtil;
+import com.v2ray.ang.util.HttpClientUtils;
 import com.v2ray.ang.util.Utils;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
 import me.dozen.dpreference.DPreference;
+
+import static com.v2ray.ang.AppConfig.ANG_CONFIG;
 
 /**
  * @see com.v2ray.ang.util.Utils
@@ -39,9 +50,12 @@ public class SocksServerManager {
 
     public final static String TAG = "ALIEN_V2RAY";
 
+    private static final Gson GSON = new Gson();
+
     private static DPreference defaultDPreference = _ExtKt.getDefaultDPreference(AngApplication.Companion.getContext());
     private static AngConfigManager angConfigManager = AngConfigManager.INSTANCE;
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
+    private static final int REQUEST_READ_PHONE_STATE = 1;
     private static String[] PERMISSIONS_STORAGE = {
             "android.permission.READ_EXTERNAL_STORAGE",
             "android.permission.WRITE_EXTERNAL_STORAGE"};
@@ -53,19 +67,20 @@ public class SocksServerManager {
         AngConfig angConfig = angConfigManager.getConfigs();
         ArrayList<AngConfig.VmessBean> vmessBeans = angConfig.getVmess();
         AngConfig.VmessBean activeVmess = vmessBeans.get(angConfigManager.getConfigs().getIndex());
-        if (activeVmess == null) {
-            Log.i(TAG, "当前无激活socks配置");
-        }
+        Log.i(TAG, "总配置数：" + vmessBeans.size() + "当前激活配置：" + activeVmess.getAddress() + ":" + activeVmess.getPort());
         String activeServerUrl = getServerUrl(activeVmess);
+        List<AngConfig.VmessBean> needRemoveVmess = new ArrayList<>();
         for (int index = 0; index < vmessBeans.size(); index++) {
             AngConfig.VmessBean vmessBean = vmessBeans.get(index);
             if (getServerUrl(vmessBean).equals(activeServerUrl)) {
                 // 正在使用的配置跳过
                 continue;
             }
-            angConfigManager.removeServer(index);
-            Log.i(TAG, "删除socks配置:" + new Gson().toJson(vmessBean));
+            needRemoveVmess.add(vmessBean);
         }
+        angConfig.getVmess().removeAll(needRemoveVmess);
+        angConfig.setIndex(0);
+        Log.i(TAG, "删除" + needRemoveVmess.size() + "条socks配置:" + new Gson().toJson(needRemoveVmess));
     }
 
     /**
@@ -92,11 +107,13 @@ public class SocksServerManager {
                 Log.i(TAG, "找到匹配的服务器：" + new Gson().toJson(vmessBean));
                 final int serverPos = index;
                 new Thread(() -> {
-                    syncStopV2Ray();
+                    boolean stopRes = syncStopV2Ray();
+                    Log.i(TAG, "关闭V2Ray服务:" + stopRes);
                     if (angConfigManager.setActiveServer(serverPos) == 0) {
                         startV2Ray();
                     }
                 }).start();
+                return true;
             }
         }
         Log.i(TAG, "未找到匹配的服务器:" + serverUrl);
@@ -107,9 +124,12 @@ public class SocksServerManager {
      * 发送消息开启V2Ray，但不保证开启完成
      */
     public static boolean startV2Ray() {
-        boolean start = Utils.INSTANCE.startVService(AngApplication.Companion.getContext());
-        Log.i(TAG,"启动V2Ray："+start);
-        return start;
+        Log.i(TAG, "启动V2Ray：" + defaultDPreference.getPrefString(ANG_CONFIG, "null"));
+        new Handler(Looper.getMainLooper()).post(() -> {
+            boolean start = Utils.INSTANCE.startVService(AngApplication.Companion.getContext());
+            Log.i(TAG, "启动V2Ray结果：" + start);
+        });
+        return true;
     }
 
     public static boolean isV2RayVpnRunning() {
@@ -121,7 +141,7 @@ public class SocksServerManager {
             return true;
         }
         // 关闭当前运行中的V2Ray
-        Utils.INSTANCE.stopVService(AngApplication.Companion.getContext());
+        new Handler(Looper.getMainLooper()).post(() -> Utils.INSTANCE.stopVService(AngApplication.Companion.getContext()));
         // 等待最多十秒
         for (int i = 0; i < 10; i++) {
             try {
@@ -238,6 +258,11 @@ public class SocksServerManager {
                 // 没有写的权限，去申请写的权限，会弹出对话框
                 ActivityCompat.requestPermissions(activity, PERMISSIONS_STORAGE, REQUEST_EXTERNAL_STORAGE);
             }
+            // 检测READ_STATE权限
+            int readStatePermission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.READ_PHONE_STATE);
+            if (readStatePermission != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(activity, new String[]{Manifest.permission.READ_PHONE_STATE}, REQUEST_READ_PHONE_STATE);
+            }
         } catch (Exception e) {
             Log.i(TAG, "动态申请访问SD卡权限失败");
         }
@@ -248,6 +273,34 @@ public class SocksServerManager {
             return "";
         }
         return vmessBean.getAddress() + ":" + vmessBean.getPort();
+    }
+
+    public static AngConfig.VmessBean getSocksFromOps() {
+        Map<String, String> params = new HashMap<>();
+        params.put("apptype", "noLoginMT");
+        params.put("deviceId", DeviceInfoUtil.getSerial());
+        // 代理线路渠道，4国内 5台湾 6美国
+        params.put("proxyType", "4");
+        params.put("type", "socks");
+        String resp = HttpClientUtils.post("http://controlips.corp.qunar.com/ipgetonce.do", params);
+        if (TextUtils.isEmpty(resp)) {
+            return null;
+        }
+        Map data = GSON.fromJson(resp, Map.class);
+        if (data.get("data") == null) {
+            Log.i(TAG, "http://controlips.corp.qunar.com/ipgetonce.do 返回数据为空");
+            return null;
+        }
+        OpsSocksInfo socksInfo = GSON.fromJson(GSON.toJson(data.get("data")), OpsSocksInfo.class);
+        if (socksInfo == null || !socksInfo.getEnable() || TextUtils.isEmpty(socksInfo.getHost()) || socksInfo.getPort() == null) {
+            Log.i(TAG, "http://controlips.corp.qunar.com/ipgetonce.do 返回socks信息不合法：" + resp);
+            return null;
+        }
+        AngConfig.VmessBean vmessBean = new AngConfig.VmessBean();
+        vmessBean.setRemarks(socksInfo.getHost());
+        vmessBean.setAddress(socksInfo.getHost());
+        vmessBean.setPort(socksInfo.getPort());
+        return vmessBean;
     }
 
 }
