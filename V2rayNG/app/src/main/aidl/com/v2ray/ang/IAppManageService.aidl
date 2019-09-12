@@ -6,4 +6,6 @@ package com.v2ray.ang;
 interface IAppManageService {
 
     boolean switchSocksServer(String socksInfoJson);
+
+    boolean autoSwitchSocksServer();
 }

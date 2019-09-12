@@ -40,8 +40,14 @@ public class AppManageService extends Service {
             }
             return SocksServerManager.registerAndActiveServer(vmessBean);
         }
-    };
 
+        @Override
+        public boolean autoSwitchSocksServer() throws RemoteException {
+            // 异步执行，因为关闭服务时需要等待几秒
+            new Thread(AutoChangeServerThread::autoChangeServer).start();
+            return true;
+        }
+    };
 
 
     @Nullable
@@ -54,7 +60,7 @@ public class AppManageService extends Service {
     public void onCreate() {
         Log.i(TAG, "V2Ray Manage Service启动成功");
         // 启动定时切换代理
-        new AutoChangeServerThread().start();
+//        new AutoChangeServerThread().start();
     }
 
     @Override

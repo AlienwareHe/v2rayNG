@@ -27,7 +27,7 @@
     <string name="menu_item_import_config_manually_ss">Type manually[Shadowsocks]</string>
     <string name="menu_item_import_config_manually_socks">Type manually[Socks]</string>
     <string name="menu_item_remove_all_idle_servers">remote all idle servers</string>
-    <string name="menu_item_test_register_servers">test register socks servers</string>
+    <string name="menu_item_auto_change_socks_server">auto change socks server</string>
     <string name="menu_item_switch_socks_from_sdcard">switch socks servers from sdcard</string>
     <string name="menu_item_import_config_custom">custom config</string>
     <string name="menu_item_import_config_custom_clipboard">Import custom config from Clipboard</string>

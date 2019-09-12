@@ -13,11 +13,13 @@ import android.util.Log;
 import com.google.common.base.Strings;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.v2ray.ang.AngApplication;
 import com.v2ray.ang.AppConfig;
 import com.v2ray.ang.dto.AngConfig;
 import com.v2ray.ang.extension._ExtKt;
 import com.v2ray.ang.model.OpsSocksInfo;
+import com.v2ray.ang.model.TrainSocksInfo;
 import com.v2ray.ang.service.V2RayVpnService;
 import com.v2ray.ang.util.AngConfigManager;
 import com.v2ray.ang.util.DeviceInfoUtil;
@@ -34,6 +36,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Random;
 import java.util.Set;
 
 import me.dozen.dpreference.DPreference;
@@ -66,6 +69,15 @@ public class SocksServerManager {
     public static void removeAllIdleServer() {
         AngConfig angConfig = angConfigManager.getConfigs();
         ArrayList<AngConfig.VmessBean> vmessBeans = angConfig.getVmess();
+        if (vmessBeans == null || vmessBeans.size() <= 0) {
+            return;
+        }
+        int activeIndex = angConfigManager.getConfigs().getIndex();
+        if (activeIndex == -1) {
+            angConfigManager.getConfigs().getVmess().clear();
+            Log.i(TAG, "清除所有代理服务器配置：" + vmessBeans.size());
+            return;
+        }
         AngConfig.VmessBean activeVmess = vmessBeans.get(angConfigManager.getConfigs().getIndex());
         Log.i(TAG, "总配置数：" + vmessBeans.size() + "当前激活配置：" + activeVmess.getAddress() + ":" + activeVmess.getPort());
         String activeServerUrl = getServerUrl(activeVmess);
@@ -104,7 +116,7 @@ public class SocksServerManager {
         for (int index = 0; index < vmessBeans.size(); index++) {
             AngConfig.VmessBean vmessBean = vmessBeans.get(index);
             if (serverUrl.equals(getServerUrl(vmessBean))) {
-                Log.i(TAG, "找到匹配的服务器：" + new Gson().toJson(vmessBean));
+                Log.i(TAG, "找到匹配的服务器所在位置:" + index + "，" + new Gson().toJson(vmessBean));
                 final int serverPos = index;
                 new Thread(() -> {
                     boolean stopRes = syncStopV2Ray();
@@ -137,6 +149,7 @@ public class SocksServerManager {
     }
 
     public static boolean syncStopV2Ray() {
+        // 已经处于关闭状态
         if (!isV2RayVpnRunning()) {
             return true;
         }
@@ -149,7 +162,7 @@ public class SocksServerManager {
             } catch (InterruptedException e) {
                 Log.i(TAG, "等待V2RayVpnService关闭失败");
             }
-            if (isV2RayVpnRunning()) {
+            if (!isV2RayVpnRunning()) {
                 return true;
             }
         }
@@ -264,7 +277,7 @@ public class SocksServerManager {
                 ActivityCompat.requestPermissions(activity, new String[]{Manifest.permission.READ_PHONE_STATE}, REQUEST_READ_PHONE_STATE);
             }
         } catch (Exception e) {
-            Log.i(TAG, "动态申请访问SD卡权限失败");
+            Log.i(TAG, "动态申请权限失败", e);
         }
     }
 
@@ -275,6 +288,37 @@ public class SocksServerManager {
         return vmessBean.getAddress() + ":" + vmessBean.getPort();
     }
 
+
+    /**
+     * 火车票获取SOCKS代理资源
+     */
+    public static AngConfig.VmessBean getSocksFromTrain() {
+        String resp = HttpClientUtils.get("http://l-nfsrr.t.cn8.qunar.com:2081/getSocksProxyList");
+        if (TextUtils.isEmpty(resp)) {
+            Log.i(TAG, "the socks from train is empty");
+            return null;
+        }
+        List<TrainSocksInfo> trainSocksInfos = GSON.fromJson(resp, TypeToken.getParameterized(List.class, TrainSocksInfo.class).getType());
+        if (trainSocksInfos == null || trainSocksInfos.size() == 0) {
+            Log.i(TAG, "the socks from train is null");
+            return null;
+        }
+        TrainSocksInfo trainSocksInfo = trainSocksInfos.get(new Random().nextInt(trainSocksInfos.size()));
+        if (trainSocksInfo == null || TextUtils.isEmpty(trainSocksInfo.getProxyIp()) || trainSocksInfo.getProxyPort() <= 0) {
+            Log.i(TAG, "the socks from train is invalid");
+            return null;
+        }
+        AngConfig.VmessBean vmessBean = new AngConfig.VmessBean();
+        vmessBean.setPort(trainSocksInfo.getProxyPort());
+        vmessBean.setAddress(trainSocksInfo.getProxyIp());
+        vmessBean.setRemarks(trainSocksInfo.getExportIp());
+        return vmessBean;
+    }
+
+
+    /**
+     * 从OPS获取SOCKS代理资源
+     */
     public static AngConfig.VmessBean getSocksFromOps() {
         Map<String, String> params = new HashMap<>();
         params.put("apptype", "noLoginMT");
@@ -284,11 +328,12 @@ public class SocksServerManager {
         params.put("type", "socks");
         String resp = HttpClientUtils.post("http://controlips.corp.qunar.com/ipgetonce.do", params);
         if (TextUtils.isEmpty(resp)) {
+            Log.i(TAG, "http://controlips.corp.qunar.com/ipgetonce.do 返回数据为空");
             return null;
         }
         Map data = GSON.fromJson(resp, Map.class);
         if (data.get("data") == null) {
-            Log.i(TAG, "http://controlips.corp.qunar.com/ipgetonce.do 返回数据为空");
+            Log.i(TAG, "http://controlips.corp.qunar.com/ipgetonce.do 返回数据为空" + resp);
             return null;
         }
         OpsSocksInfo socksInfo = GSON.fromJson(GSON.toJson(data.get("data")), OpsSocksInfo.class);

@@ -235,7 +235,6 @@ class V2RayVpnService : VpnService() {
             } catch (e: Exception) {
             }
             configContent = defaultDPreference.getPrefString(AppConfig.PREF_CURR_CONFIG, "")
-            Log.i(SocksServerManager.TAG, "default config:$configContent")
             v2rayPoint.configureFileContent = configContent
             v2rayPoint.enableLocalDNS = defaultDPreference.getPrefBoolean(SettingsActivity.PREF_LOCAL_DNS_ENABLED, false)
             v2rayPoint.forwardIpv6 = defaultDPreference.getPrefBoolean(SettingsActivity.PREF_FORWARD_IPV6, false)

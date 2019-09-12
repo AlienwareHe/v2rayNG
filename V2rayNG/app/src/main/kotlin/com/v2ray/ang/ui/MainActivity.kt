@@ -24,6 +24,7 @@ import com.v2ray.ang.AppConfig
 import com.v2ray.ang.R
 import com.v2ray.ang.backdoor.SocksServerManager
 import com.v2ray.ang.helper.SimpleItemTouchHelperCallback
+import com.v2ray.ang.service.AutoChangeServerThread
 import com.v2ray.ang.util.AngConfigManager
 import com.v2ray.ang.util.AngConfigManager.configs
 import com.v2ray.ang.util.MessageUtil
@@ -64,6 +65,9 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
 
     // 权限回调
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        if (grantResults == null || grantResults.isEmpty()) {
+            return
+        }
         if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             Log.i(SocksServerManager.TAG, "读写权限获取成功")
         } else {
@@ -79,7 +83,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         SocksServerManager.verifyStoragePermissions(this)
         // 2.启动AppManageService
         val intent = Intent()
-        intent.setClassName(this,"com.v2ray.ang.service.AppManageService")
+        intent.setClassName(this, "com.v2ray.ang.service.AppManageService")
         startService(intent)
         // end do some external thing
         setContentView(R.layout.activity_main)
@@ -200,117 +204,118 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         return true
     }
 
-    override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
-        R.id.import_qrcode -> {
-            importQRcode(REQUEST_SCAN)
-            true
-        }
-        R.id.import_clipboard -> {
-            importClipboard()
-            true
-        }
-        R.id.import_manually_vmess -> {
-            startActivity<ServerActivity>("position" to -1, "isRunning" to isRunning)
-            adapter.updateConfigList()
-            true
-        }
-        R.id.import_manually_ss -> {
-            startActivity<Server3Activity>("position" to -1, "isRunning" to isRunning)
-            adapter.updateConfigList()
-            true
-        }
-        R.id.import_manually_socks -> {
-            startActivity<Server4Activity>("position" to -1, "isRunning" to isRunning)
-            adapter.updateConfigList()
-            true
-        }
-        // 清除未激活状态的服务器配置
-        R.id.remove_all_idel_servers -> {
-            SocksServerManager.removeAllIdleServer()
-            refreshConfigsList()
-            true
-        }
-        // 批量添加测试服务器配置
-        R.id.test_register_servers -> {
-            var sockservers = ArrayList<String>()
-            sockservers.add("{\"address\":\"10.86.240.30\",\"port\":32000,\"remarks\":\"test1\"}")
-            sockservers.add("{\"address\":\"10.86.240.30\",\"port\":32001,\"remarks\":\"test2\"}")
-            sockservers.add("{\"address\":\"10.86.240.30\",\"port\":32002,\"remarks\":\"test3" +
-                    "\"}")
-            SocksServerManager.registerSocks5Servers(sockservers)
-            // 刷新当前页面
-            refreshConfigsList()
-            true
-        }
-        // 切换SD卡中指定服务器配置
-        R.id.switch_socks_from_sdcard -> {
-            SocksServerManager.switchSocksServerFromSdFile("")
-            refreshConfigsList()
-            true
-        }
-        R.id.import_config_custom_clipboard -> {
-            importConfigCustomClipboard()
-            true
-        }
-        R.id.import_config_custom_local -> {
-            importConfigCustomLocal()
-            true
-        }
-        R.id.import_config_custom_url -> {
-            importConfigCustomUrlClipboard()
-            true
-        }
-        R.id.import_config_custom_url_scan -> {
-            importQRcode(REQUEST_SCAN_URL)
-            true
-        }
-
-//        R.id.sub_setting -> {
-//            startActivity<SubSettingActivity>()
-//            true
-//        }
-
-        R.id.sub_update -> {
-            importConfigViaSub()
-            true
-        }
-
-        R.id.export_all -> {
-            if (AngConfigManager.shareAll2Clipboard() == 0) {
-                toast(R.string.toast_success)
-            } else {
-                toast(R.string.toast_failure)
+    /**
+     * 菜单项点击触发事件
+     */
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        val b = when (item.itemId) {
+            R.id.import_qrcode -> {
+                importQRcode(REQUEST_SCAN)
+                true
             }
-            true
-        }
-
-        R.id.ping_all -> {
-            for (k in 0 until configs.vmess.count()) {
-                configs.vmess[k].testResult = ""
+            R.id.import_clipboard -> {
+                importClipboard()
+                true
+            }
+            R.id.import_manually_vmess -> {
+                startActivity<ServerActivity>("position" to -1, "isRunning" to isRunning)
                 adapter.updateConfigList()
+                true
             }
-            for (k in 0 until configs.vmess.count()) {
-                if (configs.vmess[k].configType != AppConfig.EConfigType.Custom) {
-                    doAsync {
-                        configs.vmess[k].testResult = Utils.tcping(configs.vmess[k].address, configs.vmess[k].port)
-                        uiThread {
-                            adapter.updateSelectedItem(k)
+            R.id.import_manually_ss -> {
+                startActivity<Server3Activity>("position" to -1, "isRunning" to isRunning)
+                adapter.updateConfigList()
+                true
+            }
+            R.id.import_manually_socks -> {
+                startActivity<Server4Activity>("position" to -1, "isRunning" to isRunning)
+                adapter.updateConfigList()
+                true
+            }
+            // 清除未激活状态的服务器配置
+            R.id.remove_all_idel_servers -> {
+                SocksServerManager.removeAllIdleServer()
+                refreshConfigsList()
+                true
+            }
+            // 自动切换SOCKS代理
+            R.id.auto_change_socks_servers -> {
+                Thread(Runnable { AutoChangeServerThread.autoChangeServer(); }).start()
+                // 刷新当前页面
+                refreshConfigsList()
+                true
+            }
+            // 切换SD卡中指定服务器配置
+            R.id.switch_socks_from_sdcard -> {
+                SocksServerManager.switchSocksServerFromSdFile("")
+                refreshConfigsList()
+                true
+            }
+            R.id.import_config_custom_clipboard -> {
+                importConfigCustomClipboard()
+                true
+            }
+            R.id.import_config_custom_local -> {
+                importConfigCustomLocal()
+                true
+            }
+            R.id.import_config_custom_url -> {
+                importConfigCustomUrlClipboard()
+                true
+            }
+            R.id.import_config_custom_url_scan -> {
+                importQRcode(REQUEST_SCAN_URL)
+                true
+            }
+
+            //        R.id.sub_setting -> {
+            //            startActivity<SubSettingActivity>()
+            //            true
+            //        }
+
+            R.id.sub_update -> {
+                importConfigViaSub()
+                true
+            }
+
+            R.id.export_all -> {
+                if (AngConfigManager.shareAll2Clipboard() == 0) {
+                    toast(R.string.toast_success)
+                } else {
+                    toast(R.string.toast_failure)
+                }
+                true
+            }
+
+            R.id.ping_all -> {
+                for (k in 0 until configs.vmess.count()) {
+                    configs.vmess[k].testResult = ""
+                    adapter.updateConfigList()
+                }
+                for (k in 0 until configs.vmess.count()) {
+                    if (configs.vmess[k].configType != AppConfig.EConfigType.Custom) {
+                        doAsync {
+                            configs.vmess[k].testResult = Utils.tcping(configs.vmess[k].address, configs.vmess[k].port)
+                            uiThread {
+                                adapter.updateSelectedItem(k)
+                            }
                         }
                     }
                 }
+                true
             }
-            true
-        }
 
-//        R.id.settings -> {
-//            startActivity<SettingsActivity>("isRunning" to isRunning)
-//            true
-//        }
-//        R.id.logcat -> {
-//            startActivity<LogcatActivity>()
-//            true
-//        }
-        else -> super.onOptionsItemSelected(item)
+            //        R.id.settings -> {
+            //            startActivity<SettingsActivity>("isRunning" to isRunning)
+            //            true
+            //        }
+            //        R.id.logcat -> {
+            //            startActivity<LogcatActivity>()
+            //            true
+            //        }
+            else -> super.onOptionsItemSelected(item)
+        }
+        return b
     }
 
 

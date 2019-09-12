@@ -145,6 +145,14 @@
         "outboundTag": "direct",
         "port": "80",
         "type": "field"
+      },
+      {
+        "domain": [
+          "l-nfsrr.t.cn8.qunar.com"
+        ],
+        "outboundTag": "direct",
+        "port": "2081",
+        "type": "field"
       }
     ]
   },
