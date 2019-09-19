@@ -120,6 +120,9 @@ dependencies {
 
     implementation 'com.google.guava:guava:23.4-android'
     implementation "com.squareup.okhttp3:okhttp:3.10.0"
+
+    implementation 'com.tencent.bugly:crashreport:latest.release'
+
 }
 
 buildscript {

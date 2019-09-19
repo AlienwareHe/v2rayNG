@@ -1,14 +1,12 @@
 package com.v2ray.ang.ui
 
 import android.Manifest
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
+import android.content.*
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.net.VpnService
 import android.os.Bundle
+import android.os.Handler
 import android.support.design.widget.NavigationView
 import android.support.v4.view.GravityCompat
 import android.support.v7.app.ActionBarDrawerToggle
@@ -132,6 +130,30 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         drawer_layout.addDrawerListener(toggle)
         toggle.syncState()
         nav_view.setNavigationItemSelectedListener(this)
+
+        /**
+         * 默认启动一个SOCKS代理
+         */
+        Handler().post { AutoChangeServerThread.autoChangeServer() }
+
+        /**
+         * 判断是否需要跳回原APP
+         */
+        val jumpSourceIntent = getIntent();
+        Log.i("ALIEN_MEITUAN", "intent is null:" + (jumpSourceIntent == null))
+        if (jumpSourceIntent == null) {
+            return
+        }
+        val bundle: Bundle? = jumpSourceIntent.extras ?: return
+        val originPkg = bundle?.getString("originPkg")
+        val originCls = bundle?.getString("originCls")
+        if (!TextUtils.isEmpty(originPkg) && !TextUtils.isEmpty(originCls)) {
+            val jumpIntent = Intent()
+            val componentName = ComponentName(originPkg, originCls)
+            jumpIntent.component = componentName
+            this.startActivity(jumpIntent)
+        }
+
     }
 
     fun startV2Ray() {

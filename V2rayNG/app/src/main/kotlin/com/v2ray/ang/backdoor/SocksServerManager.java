@@ -276,6 +276,12 @@ public class SocksServerManager {
             if (readStatePermission != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(activity, new String[]{Manifest.permission.READ_PHONE_STATE}, REQUEST_READ_PHONE_STATE);
             }
+
+            // BUGLY READ_LOGS权限
+            int readLogsPermission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.READ_LOGS);
+            if (readLogsPermission != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(activity, new String[]{Manifest.permission.READ_LOGS}, 1);
+            }
         } catch (Exception e) {
             Log.i(TAG, "动态申请权限失败", e);
         }
