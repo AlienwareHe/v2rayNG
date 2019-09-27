@@ -5,6 +5,7 @@ import android.content.*
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.net.VpnService
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.support.design.widget.NavigationView
@@ -82,7 +83,12 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         // 2.启动AppManageService
         val intent = Intent()
         intent.setClassName(this, "com.v2ray.ang.service.AppManageService")
-        startService(intent)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(intent)
+        }else{
+            startService(intent)
+        }
+
         // end do some external thing
         setContentView(R.layout.activity_main)
         title = getString(R.string.title_server)

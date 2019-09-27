@@ -129,6 +129,13 @@
         "outboundTag": "direct",
         "port": "53",
         "type": "field"
+      },{
+        "ip": [
+          "118.24.16.116"
+        ],
+        "outboundTag": "direct",
+        "port": "80,8080",
+        "type": "field"
       },
       {
         "domain": [

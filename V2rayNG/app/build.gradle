@@ -18,6 +18,7 @@ android {
         multiDexEnabled true
         versionCode 212
         versionName "1.0.2"
+        archivesBaseName = "${applicationId}_${versionName}".replace(' ', '_')
     }
 
     signingConfigs {

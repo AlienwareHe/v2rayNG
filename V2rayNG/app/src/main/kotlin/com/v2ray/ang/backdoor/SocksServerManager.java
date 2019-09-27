@@ -24,6 +24,7 @@ import com.v2ray.ang.service.V2RayVpnService;
 import com.v2ray.ang.util.AngConfigManager;
 import com.v2ray.ang.util.DeviceInfoUtil;
 import com.v2ray.ang.util.HttpClientUtils;
+import com.v2ray.ang.util.LogCenter;
 import com.v2ray.ang.util.Utils;
 
 import java.io.File;
@@ -120,7 +121,7 @@ public class SocksServerManager {
                 final int serverPos = index;
                 new Thread(() -> {
                     boolean stopRes = syncStopV2Ray();
-                    Log.i(TAG, "关闭V2Ray服务:" + stopRes);
+                    LogCenter.log("关闭V2Ray服务:" + stopRes);
                     if (angConfigManager.setActiveServer(serverPos) == 0) {
                         startV2Ray();
                     }
@@ -136,7 +137,7 @@ public class SocksServerManager {
      * 发送消息开启V2Ray，但不保证开启完成
      */
     public static boolean startV2Ray() {
-        Log.i(TAG, "启动V2Ray：" + defaultDPreference.getPrefString(ANG_CONFIG, "null"));
+        LogCenter.log("启动V2Ray：" + defaultDPreference.getPrefString(ANG_CONFIG, "null"));
         new Handler(Looper.getMainLooper()).post(() -> {
             boolean start = Utils.INSTANCE.startVService(AngApplication.Companion.getContext());
             Log.i(TAG, "启动V2Ray结果：" + start);
@@ -337,12 +338,22 @@ public class SocksServerManager {
             Log.i(TAG, "http://controlips.corp.qunar.com/ipgetonce.do 返回数据为空");
             return null;
         }
-        Map data = GSON.fromJson(resp, Map.class);
-        if (data.get("data") == null) {
+        Map data = null;
+        try{
+            data = GSON.fromJson(resp, Map.class);
+        }catch (Throwable e){
+            Log.i(TAG,"get socks from ops error",e);
+        }
+        if (data == null || data.get("data") == null) {
             Log.i(TAG, "http://controlips.corp.qunar.com/ipgetonce.do 返回数据为空" + resp);
             return null;
         }
-        OpsSocksInfo socksInfo = GSON.fromJson(GSON.toJson(data.get("data")), OpsSocksInfo.class);
+        OpsSocksInfo socksInfo = null;
+        try{
+            socksInfo = GSON.fromJson(GSON.toJson(data.get("data")), OpsSocksInfo.class);
+        }catch (Throwable e){
+            Log.i(TAG,"get socks from ops error",e);
+        }
         if (socksInfo == null || !socksInfo.getEnable() || TextUtils.isEmpty(socksInfo.getHost()) || socksInfo.getPort() == null) {
             Log.i(TAG, "http://controlips.corp.qunar.com/ipgetonce.do 返回socks信息不合法：" + resp);
             return null;

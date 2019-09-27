@@ -1,9 +1,5 @@
 package com.v2ray.ang.service
 
-import android.app.Notification
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -36,8 +32,13 @@ import java.io.FileInputStream
 import java.lang.ref.SoftReference
 import android.os.Build
 import android.annotation.TargetApi
+import android.app.*
+import android.text.TextUtils
 import android.util.Log
 import com.v2ray.ang.backdoor.SocksServerManager
+import com.v2ray.ang.backdoor.SocksServerManager.TAG
+import com.v2ray.ang.util.LogCenter
+import com.v2ray.ang.util.ReActiveMeituanUtil
 import org.jetbrains.anko.doAsync
 
 class V2RayVpnService : VpnService() {
@@ -247,8 +248,12 @@ class V2RayVpnService : VpnService() {
             }
 
             if (v2rayPoint.isRunning) {
+                LogCenter.log("V2Ray VPN Point启动成功")
                 MessageUtil.sendMsg2UI(this, AppConfig.MSG_STATE_START_SUCCESS, "")
                 showNotification()
+
+                // 特殊业务: 在VPN启动之后启动美团
+                ReActiveMeituanUtil.runMeituanApp(this,true)
             } else {
                 MessageUtil.sendMsg2UI(this, AppConfig.MSG_STATE_START_FAILURE, "")
                 cancelNotification()

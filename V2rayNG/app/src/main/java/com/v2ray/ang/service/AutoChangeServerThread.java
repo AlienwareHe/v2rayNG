@@ -5,6 +5,7 @@ import android.util.Log;
 import com.google.gson.Gson;
 import com.v2ray.ang.backdoor.SocksServerManager;
 import com.v2ray.ang.dto.AngConfig;
+import com.v2ray.ang.util.LogCenter;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -40,7 +41,7 @@ public class AutoChangeServerThread extends Thread {
      */
     public static synchronized void autoChangeServer() {
         AngConfig.VmessBean server = null;
-        Log.i(TAG, "从OPS获取代理资源");
+        LogCenter.log("从OPS获取代理资源");
         server = SocksServerManager.getSocksFromOps();
 //        switch (SERVER_INDEX++ % SERVER_TOTAL_NUM) {
 //            case 0:
@@ -56,10 +57,10 @@ public class AutoChangeServerThread extends Thread {
 //        }
 
         if (server == null) {
-            Log.i(TAG, "获取代理服务器信息失败");
+            LogCenter.log("获取代理服务器信息失败");
             return;
         }
-        Log.i(TAG, "自动切换代理动作执行：" + new Gson().toJson(server));
+        LogCenter.log("自动切换代理动作执行：" + new Gson().toJson(server));
         // TODO 代理信息记录
         // 清空并执行切换逻辑
         SocksServerManager.removeAllIdleServer();
