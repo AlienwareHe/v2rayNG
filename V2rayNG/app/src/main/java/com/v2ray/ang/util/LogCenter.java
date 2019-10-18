@@ -34,7 +34,7 @@ public class LogCenter {
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                Log.i(TAG, "request log center failure,content:" + content);
+                Log.i(TAG, "request log center failure,content:" + content,e);
             }
 
             @Override
@@ -51,7 +51,7 @@ public class LogCenter {
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                Log.i(TAG, "request log center failure,content:" + new Gson().toJson(params));
+                Log.i(TAG, "request log center failure,content:" + new Gson().toJson(params),e);
             }
 
             @Override
@@ -83,7 +83,7 @@ public class LogCenter {
             client.newCall(request).enqueue(new Callback() {
                 @Override
                 public void onFailure(Call call, IOException e) {
-                    Log.i(TAG, "request log center switch failure,content: " + content);
+                    Log.i(TAG, "request log center switch failure,content: " + content,e);
                 }
 
                 @Override
@@ -94,8 +94,8 @@ public class LogCenter {
                         }
                         String resp = response.body().string();
                         Map data = new Gson().fromJson(resp, Map.class);
-                        if (!"true".equals(data.get("data"))) {
-                            Log.i(TAG, "日志开关为关");
+                        if (!"true".equals(String.valueOf(data.get("data")))) {
+                            Log.i(TAG, "日志开关为关:" + data.get("data"));
                             return;
                         }
                         Map<String, String> params = Maps.newHashMap();

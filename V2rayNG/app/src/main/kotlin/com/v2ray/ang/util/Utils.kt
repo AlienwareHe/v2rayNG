@@ -394,9 +394,10 @@ object Utils {
         var conn: HttpURLConnection? = null
 
         try {
-            val url = URL("https",
-                    "www.google.com",
-                    "/generate_204")
+//            val url = URL("https",
+//                    "www.google.com",
+//                    "/generate_204")
+            val url  = URL("https://piao.qunar.com/")
 
             conn = url.openConnection(
                 Proxy(Proxy.Type.HTTP,
@@ -429,6 +430,45 @@ object Utils {
         }
 
         return result
+    }
+
+    fun testConnectionSpeed(context: Context): Long{
+        var conn: HttpURLConnection? = null
+        val port = 10808
+
+        try {
+            val url  = URL("https://piao.qunar.com/")
+
+            conn = url.openConnection(
+                    Proxy(Proxy.Type.HTTP,
+                            InetSocketAddress("127.0.0.1", port + 1))) as HttpURLConnection
+            conn.connectTimeout = 10000
+            conn.readTimeout = 30000
+            conn.setRequestProperty("Connection", "close")
+            conn.instanceFollowRedirects = false
+            conn.useCaches = false
+
+            val start = SystemClock.elapsedRealtime()
+            val code = conn.responseCode
+            val elapsed = SystemClock.elapsedRealtime() - start
+
+            if (code == 204 || code == 200 && conn.responseLength == 0L) {
+                return elapsed
+            } else {
+                return -1
+            }
+        } catch (e: IOException) {
+            // network exception
+            Log.d(AppConfig.ANG_PACKAGE,"testConnection IOException: "+Log.getStackTraceString(e))
+            return -1
+        } catch (e: Exception) {
+            // library exception, eg sumsung
+            Log.d(AppConfig.ANG_PACKAGE,"testConnection Exception: "+Log.getStackTraceString(e))
+            return -1
+        } finally {
+            conn?.disconnect()
+        }
+
     }
 
     /**
