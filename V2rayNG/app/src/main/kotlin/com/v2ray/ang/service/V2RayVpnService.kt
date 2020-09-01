@@ -252,7 +252,7 @@ class V2RayVpnService : VpnService() {
                 MessageUtil.sendMsg2UI(this, AppConfig.MSG_STATE_START_SUCCESS, "")
                 showNotification()
                 // 特殊业务: 在VPN启动之后启动美团
-                ReActiveMeituanUtil.runMeituanApp(this, true)
+                // ReActiveMeituanUtil.runMeituanApp(this, true)
             } else {
                 MessageUtil.sendMsg2UI(this, AppConfig.MSG_STATE_START_FAILURE, "")
                 cancelNotification()

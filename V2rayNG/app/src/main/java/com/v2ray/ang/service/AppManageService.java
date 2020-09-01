@@ -109,12 +109,12 @@ public class AppManageService extends Service {
         }
 
         // 定时运行保活美团
-        if (isReActiveTaskRunning.compareAndSet(false, true)) {
-            new ScheduledThreadPoolExecutor(1).scheduleWithFixedDelay(() -> {
-                Log.i(TAG, "保活定时任务执行");
-                ReActiveMeituanUtil.INSTANCE.runMeituanApp(this,false);
-            }, 60 * 1000, 60 * 1000, TimeUnit.MILLISECONDS);
-        }
+//        if (isReActiveTaskRunning.compareAndSet(false, true)) {
+//            new ScheduledThreadPoolExecutor(1).scheduleWithFixedDelay(() -> {
+//                Log.i(TAG, "保活定时任务执行");
+//                ReActiveMeituanUtil.INSTANCE.runMeituanApp(this,false);
+//            }, 60 * 1000, 60 * 1000, TimeUnit.MILLISECONDS);
+//        }
     }
 
     @Override

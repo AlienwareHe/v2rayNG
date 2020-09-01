@@ -39,7 +39,10 @@ object AppConfig {
 
     // 为空时的默认DNS配置
     const val DNS_AGENT = "114.114.114.114"
-    const val DNS_DIRECT = "223.5.5.5"
+    /**
+     * 境内DNS为空时的默认选项，启用本地DNS时生效
+     */
+    const val DNS_DIRECT = "114.114.114.114"
 
     const val MSG_REGISTER_CLIENT = 1
     const val MSG_STATE_RUNNING = 11
